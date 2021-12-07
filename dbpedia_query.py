@@ -60,7 +60,7 @@ conn_details = {
 
 #name of the datbase to query
 db = "sparql"
-
+lang = "en"
 
 #connect to the database
 with stardog.Connection(db, **conn_details) as conn:
@@ -72,21 +72,21 @@ with stardog.Connection(db, **conn_details) as conn:
   where 
   {
     ?artist foaf:name ?name ;
-      owl:sameAs ?musicBrainz ;
-      dbo:activeYearsStartYear ?startYear ;
-      dbo:abstract ?about .
-      optional { ?artist dbo:activeYearsEndYear ?endYear .}
+            owl:sameAs ?musicBrainz ;
+            dbo:activeYearsStartYear ?startYear ;
+            dbo:abstract ?about .
 
       optional {  ?artist dbo:birthDate ?birthDate .
-                  ?artist dbo:birthYear ?birthYear .
-                  ?artist dbo:deathDate ?deathDate . 
+                  ?artist dbo:birthYear ?birthYear . }
+      optional {  ?artist dbo:deathDate ?deathDate . 
                   ?artist dbo:deathYear ?deathYear .}
+      optional {  ?artist dbo:activeYearsEndYear ?endYear .}
     """
-    """
-    filter langMatches(lang(?about),'en')
+    f"""
+    filter langMatches(lang(?about),'{lang}')
     filter regex(?musicBrainz, "musicbrainz") .
     """
-    f"""filter regex(?name, "{name}"@en) . """    
+    f"""filter regex(?name, "{name}"@{lang}) . """    
     """
     } limit 1
     """
