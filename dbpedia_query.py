@@ -1,6 +1,4 @@
 
-
-from typing import List
 import stardog
 import re
 from datetime import date
@@ -61,6 +59,7 @@ conn_details = {
 #name of the datbase to query
 db = "sparql"
 lang = "en"
+hasDied = False
 
 #connect to the database
 with stardog.Connection(db, **conn_details) as conn:
@@ -76,17 +75,16 @@ with stardog.Connection(db, **conn_details) as conn:
             dbo:activeYearsStartYear ?startYear ;
             dbo:abstract ?about .
 
-      optional {  ?artist dbo:birthDate ?birthDate .
-                  ?artist dbo:birthYear ?birthYear . }
-      optional {  ?artist dbo:deathDate ?deathDate . 
+    optional {  ?artist dbo:birthDate ?birthDate . }
+                  
+    optional {  ?artist dbo:deathDate ?deathDate . 
                   ?artist dbo:deathYear ?deathYear .}
-      optional {  ?artist dbo:activeYearsEndYear ?endYear .}
+    optional {  ?artist dbo:activeYearsEndYear ?endYear .}
     """
     f"""
     filter langMatches(lang(?about),'{lang}')
     filter regex(?musicBrainz, "musicbrainz") .
-    """
-    f"""filter regex(?name, "{name}"@{lang}) . """    
+    filter regex(?name, "{name}"@{lang}) . """    
     """
     } limit 1
     """
@@ -94,24 +92,49 @@ with stardog.Connection(db, **conn_details) as conn:
 #The SPARQL query result is serialized in a JSON format. 
 #The format details can be found at https://www.w3.org/TR/sparql11-results-json/
 # 
+def calculateAge(born, hasDied):
+    if (hasDied):
+      today = date.fromisoformat(deathDate)
+    else:
+      today = date.today()
+    try:
+        birthday = born.replace(year = today.year)
+ 
+    # born on February 29
+    # and the current year is not a leap year
+    except ValueError:
+        birthday = born.replace(year = today.year,
+                  month = born.month + 1, day = 1)
+ 
+    if birthday > today:
+        return today.year - born.year - 1
+    else:
+        return today.year - born.year
+
+def getResultValue(parameter):
+  return result[parameter]["value"]
 
 for result in results["results"]["bindings"]:
   #myList.append(result["name"]["value"])
   musicbrainzID = re.split(r'http://musicbrainz.org/artist/', result["musicBrainz"]["value"])
-  about = result["about"]["value"]
-  name = result["name"]["value"]
+  about = getResultValue("about")
+  name = getResultValue("name")
+  #about = result["about"]["value"]
+  #name = result["name"]["value"]
   print('Name is:', name)
-  age = date.today().year
+  #age = date.today().year
 
   if("birthDate" in result):
-    birthDate = result["birthDate"]["value"]
+    birthDate = getResultValue("birthDate")
+    #birthDate = result["birthDate"]["value"]
     print('Birth date is:', birthDate)
-    birthYear = int(result["birthYear"]["value"])
+    #birthYear = int(re.split('-', birthDate)[0])
     if ("deathDate" in result):
-      deathDate = result["deathDate"]["value"]
+      deathDate = getResultValue("deathDate")
       print('Date of death is:', deathDate)
-      age = int(result["deathYear"]["value"])
-    age -= birthYear
+      hasDied = True
+      #age = int(re.split('-', deathDate)[0])
+    age = calculateAge(date.fromisoformat(birthDate), hasDied)
     print(f"Age: {age} years old")
 
     startYear = int(result["startYear"]["value"])
