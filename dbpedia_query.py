@@ -93,7 +93,7 @@ with stardog.Connection(db, **conn_details) as conn:
 #The format details can be found at https://www.w3.org/TR/sparql11-results-json/
 # 
 def calculateAge(born, deathDate):
-    if (deathDate == 0 or deathDate == ''):
+    if (deathDate == ''):
       today = date.today()
     else:
       today = date.fromisoformat(deathDate)
@@ -111,7 +111,7 @@ def calculateAge(born, deathDate):
     if birthday > today:
         return today.year - born.year - 1
     else:
-        return today.year - born.year
+      return today.year - born.year
 
 def getResultValue(parameter:str):
   if (parameter in result):
@@ -119,14 +119,13 @@ def getResultValue(parameter:str):
   else:
     return ''
 
-def printNonEmpty(item:str):
-  if (item == ''):
+def printNonEmpty(item:str,parameter):
+  if (parameter == ''):
     return
   else: 
-    print(item)
+    print(f'{item}{parameter}')
 
 for result in results["results"]["bindings"]:
-  endYear = date.today().year
   musicbrainzID = re.split(r'http://musicbrainz.org/artist/', result["musicBrainz"]["value"])
   about = getResultValue("about")
   name = getResultValue("name")
@@ -134,32 +133,29 @@ for result in results["results"]["bindings"]:
   birthDate = getResultValue("birthDate")
   deathDate = getResultValue("deathDate")
   startYear = getResultValue("startYear")
-  endYear = getResultValue("endYear")
+  # If deathDate is not empty string, person has died
+  hasDied = len(deathDate) > 1
+  endYear = (getResultValue("endYear"), False)
   age = ''
-  if (endYear == ''):
-    endYear = date.today()
-  #yearsActive = calculateAge(startYear, endYear)
-  printNonEmpty(f'Name is: {name}')
-  print(birthName)
+  nOYearsActive = ''
+  if (endYear == ('', False)):
+    endYear = (date.today().year, False)
+  else:
+    endYear = (int(endYear[0]), True)
+  if (startYear != ''):
+    nOYearsActive = int(endYear[0]) - int(startYear)
   if (birthDate != ''):
     age = calculateAge(birthDate, deathDate)
-  printNonEmpty(f'Birth date is: {birthDate}')
-  printNonEmpty(f'Date of death is: {deathDate}')
-  printNonEmpty(f"Age: {age} years old")
-  if (#no end year)
-  printNonEmpty(int(endYear)-int(startYear))
-  #startYear = int(getResultValue("startYear"))
-  #print('Start year is:', startYear)
-
-  #if ("endYear" in result):
-    #endYear = int(getResultValue("endYear"))
-    #print("End year is:", endYear)
-  #yearsActive = int(endYear-startYear)
-  #print('Years active:', yearsActive)
-  #print(about)
+  
+  printNonEmpty('Name: ', name)
+  printNonEmpty('Birth Name: ', birthName)
+  printNonEmpty('Birth Date: ', birthDate)
+  printNonEmpty('Death Date: ', deathDate)
+  printNonEmpty('Age: ', age)
+  printNonEmpty('Years Active: ', nOYearsActive)
 
 # musicbrainzID is split using regex, which is why the ID is [1]
-#releases_list = getReleasesByMbID(musicbrainzID[1])
-#for rel in releases_list:
-  #print(rel)
+releases_list = getReleasesByMbID(musicbrainzID[1])
+for rel in releases_list:
+  print(rel)
 
