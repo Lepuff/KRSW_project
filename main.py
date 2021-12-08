@@ -123,11 +123,10 @@ def dbPediaArtistQuery(name):
                     dbo:abstract ?about .
 
             optional { ?artist dbo:birthName ?birthName . }
-            optional {  ?artist dbo:birthDate ?birthDate . }
-                        
-            optional {  ?artist dbo:deathDate ?deathDate . 
-                    ?artist dbo:deathYear ?deathYear .}
-            optional {  ?artist dbo:activeYearsEndYear ?endYear .}
+            optional { ?artist dbo:birthDate ?birthDate . }
+            optional { ?artist dbo:thumbnail ?image .}          
+            optional { ?artist dbo:deathDate ?deathDate . }
+            optional { ?artist dbo:activeYearsEndYear ?endYear .}
         """
         f"""
         filter langMatches(lang(?about),'{lang}')
@@ -197,6 +196,7 @@ while True:
             birthDate = getResultValue("birthDate")
             deathDate = getResultValue("deathDate")
             startYear = getResultValue("startYear")
+            image = getResultValue("image")
             # If deathDate is not empty string, person has died
             hasDied = len(deathDate) > 1
             endYear = (getResultValue("endYear"), False)
