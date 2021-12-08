@@ -5,6 +5,21 @@ import sys
 #General stuff
 musicbrainzngs.set_useragent("KSRW_project","1.0",contact=None)
 musicbrainzngs.set_hostname("musicbrainz.org",use_https=False)
+def convertMillis(millis):
+    seconds=int(round((millis/1000)%60))
+    minutes=int(round((millis/(1000*60))%60))
+    return str(minutes)+":"+str(seconds)
+
+
+def getSongsBymbid(release_mbid):
+    result = musicbrainzngs.browse_recordings(release=release_mbid,limit=100)
+    l =[]
+    for r in result["recording-list"]:
+        title = r["title"]
+        length = r["length"]
+        length = convertMillis(int(length))
+        l.append((title,length))
+    return l
 
 def getReleasesByMbID(artist_mbid):
     #label = "71247f6b-fd24-4a56-89a2-23512f006f0c"
@@ -43,7 +58,11 @@ def getReleasesByMbID(artist_mbid):
             releases_list.append((r["id"],r["title"],r["date"],trackcount))
     return releases_list
 
-releases_list = getReleasesByMbID("b95ce3ff-3d05-4e87-9e01-c97b66af13d4")
+#releases_list = getReleasesByMbID("b95ce3ff-3d05-4e87-9e01-c97b66af13d4")
+
+releases_list = getSongsBymbid("fd82c0c8-687c-32f6-b31e-0b2c585e006b")
+
+
 for rel in releases_list:
     print(rel)
 
