@@ -1,10 +1,17 @@
 from queue import Empty
 import PySimpleGUI as sg      
 from typing import List
+import requests
+from requests.models import Response
 import stardog
 import re
 from datetime import date
 import musicbrainzngs
+from io import BytesIO
+import os
+from PIL import Image
+from PIL import ImageQt
+import re
 #General stuff
 musicbrainzngs.set_useragent("KSRW_project","1.0",contact=None)
 musicbrainzngs.set_hostname("musicbrainz.org",use_https=False)
@@ -17,6 +24,19 @@ conn_details = {
 #name of the datbase to query
 db = "sparql"
 lang = "en"
+
+def image_to_data(im):
+    """
+    Image object to bytes object.
+    : Parameters
+      im - Image object
+    : Return
+      bytes object.
+    """
+    with BytesIO() as output:
+        im.save(output, format="PNG")
+        data = output.getvalue()
+    return data
 
 def browse_rel(artist_mbid,limit,offset):
   return musicbrainzngs.browse_releases(artist=artist_mbid,
@@ -96,7 +116,7 @@ sg.theme('DarkAmber')    # Keep things interesting for your users
 layout = [[sg.Text('Search Artist')],      
           [sg.Input(key='-IN-')],      
           [sg.Button('Search'), sg.Exit()],
-          [sg.Text('',key='-ARTIST-'),sg.Text('',key='-BIRTHNAME-')],
+          [sg.Text('',key='-ARTIST-'),sg.Text('',key='-BIRTHNAME-'),sg.Image(key='-IMAGE-')],
           [sg.Text('',key='-BIRTHDATE-'),sg.Text('',key='-DEATHDATE-')],
           [sg.Text('',key='-AGE-')],
           [sg.Text('',key='-STARTYEAR-'),sg.Text('',key='-ENDYEAR-')],
@@ -196,7 +216,9 @@ while True:
             birthDate = getResultValue("birthDate")
             deathDate = getResultValue("deathDate")
             startYear = getResultValue("startYear")
-            image = getResultValue("image")
+            imgUrl = getResultValue("image")
+            imgUrl = imgUrl.split('?')[0]
+            print(imgUrl)
             # If deathDate is not empty string, person has died
             hasDied = len(deathDate) > 1
             endYear = (getResultValue("endYear"), False)
@@ -235,9 +257,19 @@ while True:
             else:
                 window['-ENDYEAR-'].update(" ")
             window['-YEARSACTIVE-'].update("Years active: "+ str(nOYearsActive))
+            #TODO Fix the image stuff
+            #imgUrl = "https://upload.wikimedia.org/wikipedia/commons/d/d9/Test.png"   
+            #response = requests.get(imgUrl, stream=True)
+            #response.raw.decode_content = True
+            #img = ImageQt.Image.open(response.raw)
+            #data = image_to_data(img)
 
+            #window['-IMAGE-'].update(data=response.raw.read())
+            
+          
+                
             window['-ABOUT-'].update(about)
-
+            
 
         #
         releases = getReleasesByMbID(musicbrainzID[1])
