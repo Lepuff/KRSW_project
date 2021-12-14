@@ -1,18 +1,12 @@
-from queue import Empty
-import PySimpleGUI as sg      
-from typing import List
-import requests
-from requests.models import Response
+#imports
+import PySimpleGUI as sg
 import stardog
+import musicbrainzngs
 import re
 from datetime import date
-import musicbrainzngs
 from io import BytesIO
-import os
-from PIL import Image
-from PIL import ImageQt
-import re
-#General stuff
+
+#set endpoints
 musicbrainzngs.set_useragent("KSRW_project","1.0",contact=None)
 musicbrainzngs.set_hostname("musicbrainz.org",use_https=False)
 
@@ -25,41 +19,13 @@ conn_details = {
 db = "sparql"
 lang = "en"
 
-def image_to_data(im):
-    """
-    Image object to bytes object.
-    : Parameters
-      im - Image object
-    : Return
-      bytes object.
-    """
-    with BytesIO() as output:
-        im.save(output, format="PNG")
-        data = output.getvalue()
-    return data
 
-def browse_rel(artist_mbid,limit,offset):
-  return musicbrainzngs.browse_releases(artist=artist_mbid,
-                                        release_type=["album","single"],release_status=["official"],
-                                        includes=["media"], limit=limit, offset=offset)
-
-def convertMillis(millis):
+def millisToStr(millis):
     seconds=int(round((millis/1000)%60))
     minutes=int(round((millis/(1000*60))%60))
     return str(minutes)+":"+str(seconds)
 
-def padding(word:str,length:int):
-  print(word)
-  paddedWord = word
-  paddedWord = paddedWord.strip()
-  cnt = len(word)
-  padding:int = length-cnt
-  for i in range(1,padding):
-    paddedWord += " "
-
-  return paddedWord
-
-
+# get all the tracks connected to a musicbrainz release id
 def getSongsBymbid(release_mbid):
     result = musicbrainzngs.browse_recordings(release=release_mbid,limit=100)
     l =[]
@@ -68,13 +34,21 @@ def getSongsBymbid(release_mbid):
         length =""
         if "length" in r:
             length = r["length"]
-            length = convertMillis(int(length))
+            length = millisToStr(int(length))
         if "title" in r:
             title = r["title"]
         
         l.append((title,length))
     return l
 
+
+# get releases connected to to a artist, subfunction becuase of the limit on requests on the musicbrainz server, see next function.
+def browse_rel(artist_mbid,limit,offset):
+  return musicbrainzngs.browse_releases(artist=artist_mbid,
+                                        release_type=["album","single"],release_status=["official"],
+                                        includes=["media"], limit=limit, offset=offset)
+
+#get all the releases connected to an musicbrainz artist id
 def getReleasesByMbID(artist_mbid):
   limit = 100
   offset = 0
@@ -109,25 +83,6 @@ def getReleasesByMbID(artist_mbid):
       u_list.append(r["title"])
       releases_list.append((id,title,trackcount,date))
   return releases_list
-
-#UI
-sg.theme('DarkAmber')    # Keep things interesting for your users
-
-layout = [[sg.Text('Search Artist')],      
-          [sg.Input(key='-IN-')],      
-          [sg.Button('Search'), sg.Exit()],
-          [sg.Text('',key='-ARTIST-'),sg.Text('',key='-BIRTHNAME-'),sg.Image(key='-IMAGE-')],
-          [sg.Text('',key='-BIRTHDATE-'),sg.Text('',key='-DEATHDATE-')],
-          [sg.Text('',key='-AGE-')],
-          [sg.Text('',key='-STARTYEAR-'),sg.Text('',key='-ENDYEAR-')],
-          [sg.Text('',key='-YEARSACTIVE-')],
-          [sg.Multiline(size=(114,15),key='-ABOUT-')],
-          [sg.Listbox(values=[], size=(70, 15), key='-RELLIST-', enable_events=True),sg.Listbox(values=[], size=(40, 15), key='-SONGLIST-', enable_events=False)]]      
-
-window = sg.Window('KRSW project', layout)      
-
-
-
 
 def dbPediaArtistQuery(name):
     #connect to the database
@@ -191,6 +146,21 @@ def printNonEmpty(item:str,parameter):
     else: 
         print(f'{item}{parameter}')
 
+#UI
+sg.theme('DarkAmber')    # Keep things interesting for your users
+
+layout = [[sg.Text('Search Artist')],      
+          [sg.Input(key='-IN-')],      
+          [sg.Button('Search'), sg.Exit()],
+          [sg.Text('',key='-ARTIST-'),sg.Text('',key='-BIRTHNAME-'),sg.Image(key='-IMAGE-')],
+          [sg.Text('',key='-BIRTHDATE-'),sg.Text('',key='-DEATHDATE-')],
+          [sg.Text('',key='-AGE-')],
+          [sg.Text('',key='-STARTYEAR-'),sg.Text('',key='-ENDYEAR-')],
+          [sg.Text('',key='-YEARSACTIVE-')],
+          [sg.Multiline(size=(114,15),key='-ABOUT-')],
+          [sg.Listbox(values=[], size=(70, 15), key='-RELLIST-', enable_events=True),sg.Listbox(values=[], size=(40, 15), key='-SONGLIST-', enable_events=False)]]      
+
+window = sg.Window('KRSW project', layout)      
 
 #GUI main loop
 rel_list =[]
@@ -199,14 +169,12 @@ song_list =[]
 while True:                             
     # The Event Loop
     event, values = window.read() 
-    #print(event, values)       
+    #print(event, values) #for debugging dont remove      
     if event == sg.WIN_CLOSED or event == 'Exit':
         break
     if event == 'Search':
         searchName = values['-IN-']
         results = dbPediaArtistQuery(searchName)
-
-        #
         musicbrainzID = ""
         for result in results["results"]["bindings"]:
             musicbrainzID = re.split(r'http://musicbrainz.org/artist/', result["musicBrainz"]["value"])
@@ -217,8 +185,8 @@ while True:
             deathDate = getResultValue("deathDate")
             startYear = getResultValue("startYear")
             imgUrl = getResultValue("image")
-            imgUrl = imgUrl.split('?')[0]
-            print(imgUrl)
+            #imgUrl = imgUrl.split('?')[0]
+            #print(imgUrl)
             # If deathDate is not empty string, person has died
             hasDied = len(deathDate) > 1
             endYear = (getResultValue("endYear"), False)
@@ -257,26 +225,13 @@ while True:
             else:
                 window['-ENDYEAR-'].update(" ")
             window['-YEARSACTIVE-'].update("Years active: "+ str(nOYearsActive))
-            #TODO Fix the image stuff
-            #imgUrl = "https://upload.wikimedia.org/wikipedia/commons/d/d9/Test.png"   
-            #response = requests.get(imgUrl, stream=True)
-            #response.raw.decode_content = True
-            #img = ImageQt.Image.open(response.raw)
-            #data = image_to_data(img)
-
-            #window['-IMAGE-'].update(data=response.raw.read())
-            
-          
-                
+         
             window['-ABOUT-'].update(about)
             
-
-        #
         releases = getReleasesByMbID(musicbrainzID[1])
         rel_list = []
         for r in releases:
             title = str(r[1])
-            #title = padding(title,70)
             relDate = str(r[3])
             tracks = str(r[2])
           
