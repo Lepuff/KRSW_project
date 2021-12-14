@@ -147,7 +147,7 @@ def printNonEmpty(item:str,parameter):
         print(f'{item}{parameter}')
 
 #UI
-sg.theme('DarkAmber')    # Keep things interesting for your users
+sg.theme('DarkAmber')
 
 layout = [[sg.Text('Search Artist')],      
           [sg.Input(key='-IN-')],      
@@ -185,8 +185,6 @@ while True:
             deathDate = getResultValue("deathDate")
             startYear = getResultValue("startYear")
             imgUrl = getResultValue("image")
-            #imgUrl = imgUrl.split('?')[0]
-            #print(imgUrl)
             # If deathDate is not empty string, person has died
             hasDied = len(deathDate) > 1
             endYear = (getResultValue("endYear"), False)
