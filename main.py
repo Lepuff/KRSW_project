@@ -4,7 +4,7 @@ import stardog
 import musicbrainzngs
 import re
 from datetime import date
-from io import BytesIO
+
 
 #set endpoints
 musicbrainzngs.set_useragent("KSRW_project","1.0",contact=None)
@@ -166,6 +166,7 @@ window = sg.Window('KRSW project', layout)
 rel_list =[]
 releases =[]
 song_list =[]
+size = (50, 50)
 while True:                             
     # The Event Loop
     event, values = window.read() 
@@ -185,6 +186,10 @@ while True:
             deathDate = getResultValue("deathDate")
             startYear = getResultValue("startYear")
             imgUrl = getResultValue("image")
+            
+            #imgUrl = str(imgUrl).replace('.jpg', '.png')
+            #imgUrl = str(imgUrl).replace('?width=300', '')
+
             # If deathDate is not empty string, person has died
             hasDied = len(deathDate) > 1
             endYear = (getResultValue("endYear"), False)
@@ -223,22 +228,32 @@ while True:
             else:
                 window['-ENDYEAR-'].update(" ")
             window['-YEARSACTIVE-'].update("Years active: "+ str(nOYearsActive))
+            
+            #print(imgUrl)
+            #window['-IMAGE-'].update(img_box)
          
             window['-ABOUT-'].update(about)
-            
-        releases = getReleasesByMbID(musicbrainzID[1])
-        rel_list = []
-        for r in releases:
-            title = str(r[1])
-            relDate = str(r[3])
-            tracks = str(r[2])
-          
-            rel_list.append("{0} : {1} Tracks:{2}".format(title,relDate,tracks))
 
-        window["-RELLIST-"].update(rel_list)
+        try:
+            print(musicbrainzID[1])
+        except IndexError:
+            window['-ARTIST-'].update('No Artist Found')
+
+        else:
+            releases = getReleasesByMbID(musicbrainzID[1])
+            rel_list = []
+            for r in releases:
+                title = str(r[1])
+                relDate = str(r[3])
+                tracks = str(r[2])
+            
+                rel_list.append("{0} : {1} Tracks:{2}".format(title,relDate,tracks))
+
+            window["-RELLIST-"].update(rel_list)
 
     if event == '-RELLIST-' :
         index = window['-RELLIST-'].GetIndexes()[0] #becuase of multiple selections
+        #### BELOW LINE CONTAINS ALBUM ID
         mbid = releases[index][0] 
         songs = getSongsBymbid(mbid)
         song_list =[]
