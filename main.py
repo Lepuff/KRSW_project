@@ -152,7 +152,7 @@ sg.theme('DarkAmber')
 layout = [[sg.Text('Search Artist')],      
           [sg.Input(key='-IN-')],      
           [sg.Button('Search'), sg.Exit()],
-          [sg.Text('',key='-ARTIST-'),sg.Text('',key='-BIRTHNAME-'),sg.Image(key='-IMAGE-')],
+          [sg.Text('',key='-ARTIST-'),sg.Text('',key='-BIRTHNAME-'),sg.Image(size=(50,50),key='-IMAGE-')],
           [sg.Text('',key='-BIRTHDATE-'),sg.Text('',key='-DEATHDATE-')],
           [sg.Text('',key='-AGE-')],
           [sg.Text('',key='-STARTYEAR-'),sg.Text('',key='-ENDYEAR-')],
@@ -187,8 +187,6 @@ while True:
             startYear = getResultValue("startYear")
             imgUrl = getResultValue("image")
             
-            #imgUrl = str(imgUrl).replace('.jpg', '.png')
-            #imgUrl = str(imgUrl).replace('?width=300', '')
 
             # If deathDate is not empty string, person has died
             hasDied = len(deathDate) > 1
@@ -229,8 +227,6 @@ while True:
                 window['-ENDYEAR-'].update(" ")
             window['-YEARSACTIVE-'].update("Years active: "+ str(nOYearsActive))
             
-            #print(imgUrl)
-            #window['-IMAGE-'].update(img_box)
          
             window['-ABOUT-'].update(about)
 
@@ -253,7 +249,6 @@ while True:
 
     if event == '-RELLIST-' :
         index = window['-RELLIST-'].GetIndexes()[0] #becuase of multiple selections
-        #### BELOW LINE CONTAINS ALBUM ID
         mbid = releases[index][0] 
         songs = getSongsBymbid(mbid)
         song_list =[]
