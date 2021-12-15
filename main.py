@@ -4,6 +4,7 @@ import stardog
 import musicbrainzngs
 import re
 from datetime import date
+import string
 
 
 #set endpoints
@@ -147,7 +148,7 @@ def printNonEmpty(item:str,parameter):
         print(f'{item}{parameter}')
 
 #UI
-sg.theme('DarkAmber')
+sg.theme('Black')
 
 layout = [[sg.Text('Search Artist')],      
           [sg.Input(key='-IN-')],      
@@ -162,6 +163,22 @@ layout = [[sg.Text('Search Artist')],
 
 window = sg.Window('KRSW project', layout)      
 
+def cap_search(s):
+  return re.sub("(^|\s)(\S)", lambda m: m.group(1) + m.group(2).upper(), s)
+
+def resetGuiWindow():
+    window['-BIRTHNAME-'].update('')
+    window['-ARTIST-'].update('')
+    window['-BIRTHDATE-'].update('')
+    window['-DEATHDATE-'].update('')
+    window['-AGE-'].update('')
+    window['-STARTYEAR-'].update('')
+    window['-YEARSACTIVE-'].update('')
+    window['-ABOUT-'].update('')
+    window['-RELLIST-'].update('')
+    window['-IMAGE-'].update('')
+    window['-SONGLIST-'].update('')
+
 #GUI main loop
 rel_list =[]
 releases =[]
@@ -174,8 +191,8 @@ while True:
     if event == sg.WIN_CLOSED or event == 'Exit':
         break
     if event == 'Search':
-        searchName = values['-IN-']
-        results = dbPediaArtistQuery(searchName)
+        searchName = str(values['-IN-'])
+        results = dbPediaArtistQuery(cap_search(searchName))
         musicbrainzID = ""
         for result in results["results"]["bindings"]:
             musicbrainzID = re.split(r'http://musicbrainz.org/artist/', result["musicBrainz"]["value"])
@@ -185,7 +202,6 @@ while True:
             birthDate = getResultValue("birthDate")
             deathDate = getResultValue("deathDate")
             startYear = getResultValue("startYear")
-            imgUrl = getResultValue("image")
             
 
             # If deathDate is not empty string, person has died
@@ -233,6 +249,7 @@ while True:
         try:
             print(musicbrainzID[1])
         except IndexError:
+            resetGuiWindow()
             window['-ARTIST-'].update('No Artist Found')
 
         else:
