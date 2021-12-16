@@ -163,8 +163,11 @@ layout = [[sg.Text('Search Artist')],
 
 window = sg.Window('KRSW project', layout)      
 
-def cap_search(s):
-  return re.sub("(^|\s)(\S)", lambda m: m.group(1) + m.group(2).upper(), s)
+def cap_search(s:str):
+    # Convert string to all lower case
+    s = s.lower()
+    # Make all first characters of words upper case
+    return re.sub("(^|\s)(\S)", lambda m: m.group(1) + m.group(2).upper(), s)
 
 def resetGuiWindow():
     window['-BIRTHNAME-'].update('')
