@@ -54,13 +54,11 @@ def getReleasesByMbID(artist_mbid):
   limit = 100
   offset = 0
   releases = []
-  page = 1
   result = browse_rel(artist_mbid,limit,offset)
   page_releases = result['release-list']
   releases += page_releases
   while len(page_releases) >= limit:
     offset += limit
-    page += 1
     result = browse_rel(artist_mbid,limit,offset)
     page_releases = result['release-list']
     releases += page_releases
