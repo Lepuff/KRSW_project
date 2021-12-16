@@ -4,7 +4,6 @@ import stardog
 import musicbrainzngs
 import re
 from datetime import date
-import string
 
 
 #set endpoints
@@ -105,7 +104,7 @@ def dbPediaArtistQuery(name):
         f"""
         filter langMatches(lang(?about),'{lang}')
         filter regex(?musicBrainz, "musicbrainz") .
-        filter regex(?name, "{name}"@{lang}) . """    
+        filter regex(?name, "{name}"@{lang}, "i") . """    
         """
         } limit 1
         """
@@ -161,12 +160,6 @@ layout = [[sg.Text('Search Artist')],
 
 window = sg.Window('KRSW project', layout)      
 
-def cap_search(s:str):
-    # Convert string to all lower case
-    s = s.lower()
-    # Make all first characters of words upper case
-    return re.sub("(^|\s)(\S)", lambda m: m.group(1) + m.group(2).upper(), s)
-
 def resetGuiWindow():
     window['-BIRTHNAME-'].update('')
     window['-ARTIST-'].update('')
@@ -193,7 +186,7 @@ while True:
         break
     if event == 'Search':
         searchName = str(values['-IN-'])
-        results = dbPediaArtistQuery(cap_search(searchName))
+        results = dbPediaArtistQuery(searchName)
         musicbrainzID = ""
         for result in results["results"]["bindings"]:
             musicbrainzID = re.split(r'http://musicbrainz.org/artist/', result["musicBrainz"]["value"])
