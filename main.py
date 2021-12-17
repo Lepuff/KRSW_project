@@ -2,8 +2,9 @@
 import PySimpleGUI as sg
 import stardog
 import musicbrainzngs
-import re
 from datetime import date
+import re
+
 
 
 #set endpoints
@@ -90,16 +91,19 @@ def dbPediaArtistQuery(name):
         select distinct *
         where 
         {
-            ?artist foaf:name ?name ;
-                    owl:sameAs ?musicBrainz ;
-                    dbo:activeYearsStartYear ?startYear ;
-                    dbo:abstract ?about .
+            { ?artist foaf:name ?name }
+            union
+            { ?artist dbp:name ?name  }
+            
+            ?artist owl:sameAs ?musicBrainz .
 
+            optional { ?artist dbo:abstract ?about .}
+            optional { ?artist dbo:activeYearsStartYear ?startYear .}
             optional { ?artist dbo:birthName ?birthName . }
-            optional { ?artist dbo:birthDate ?birthDate . }
-            optional { ?artist dbo:thumbnail ?image .}          
+            optional { ?artist dbo:birthDate ?birthDate . }         
             optional { ?artist dbo:deathDate ?deathDate . }
             optional { ?artist dbo:activeYearsEndYear ?endYear .}
+
         """
         f"""
         filter langMatches(lang(?about),'{lang}')
@@ -150,7 +154,7 @@ sg.theme('Black')
 layout = [[sg.Text('Search Artist')],      
           [sg.Input(key='-IN-')],      
           [sg.Button('Search'), sg.Exit()],
-          [sg.Text('',key='-ARTIST-'),sg.Text('',key='-BIRTHNAME-'),sg.Image(size=(50,50),key='-IMAGE-')],
+          [sg.Text('',key='-ARTIST-'),sg.Text('',key='-BIRTHNAME-'),sg.Text('',key='-BANDMEMBER-')],
           [sg.Text('',key='-BIRTHDATE-'),sg.Text('',key='-DEATHDATE-')],
           [sg.Text('',key='-AGE-')],
           [sg.Text('',key='-STARTYEAR-'),sg.Text('',key='-ENDYEAR-')],
@@ -159,6 +163,7 @@ layout = [[sg.Text('Search Artist')],
           [sg.Listbox(values=[], size=(70, 15), key='-RELLIST-', enable_events=True),sg.Listbox(values=[], size=(40, 15), key='-SONGLIST-', enable_events=False)]]      
 
 window = sg.Window('KRSW project', layout)      
+
 
 def resetGuiWindow():
     window['-BIRTHNAME-'].update('')
@@ -170,7 +175,6 @@ def resetGuiWindow():
     window['-YEARSACTIVE-'].update('')
     window['-ABOUT-'].update('')
     window['-RELLIST-'].update('')
-    window['-IMAGE-'].update('')
     window['-SONGLIST-'].update('')
 
 #GUI main loop
@@ -178,6 +182,12 @@ rel_list =[]
 releases =[]
 song_list =[]
 size = (50, 50)
+def isBand(birthName, birthDate, deathDate):
+    isBand = True
+    if (birthName != '' or birthDate != '' or deathDate != ''):
+        isBand = False
+    return isBand
+
 while True:                             
     # The Event Loop
     event, values = window.read() 
@@ -196,7 +206,8 @@ while True:
             birthDate = getResultValue("birthDate")
             deathDate = getResultValue("deathDate")
             startYear = getResultValue("startYear")
-            
+            bandMember = getResultValue("bandMember")
+            isABand = isBand(birthName, birthDate, deathDate)
 
             # If deathDate is not empty string, person has died
             hasDied = len(deathDate) > 1
@@ -212,7 +223,10 @@ while True:
             if (birthDate != ''):
                 age = calculateAge(birthDate, deathDate)
             
-            window['-ARTIST-'].update("Artist: "+name)
+            if(isABand):
+                window['-ARTIST-'].update("Band: "+name)
+            else:
+                window['-ARTIST-'].update("Artist: "+name)
             if(birthName != ""):
                 window['-BIRTHNAME-'].update("Birth name: "+birthName)
             else:
@@ -230,21 +244,30 @@ while True:
             else:
                 window['-DEATHDATE-'].update(" ")
             
-            window['-STARTYEAR-'].update("Start year: "+startYear)
+            if(startYear):
+                window['-STARTYEAR-'].update("Start year: "+startYear)
+            else:
+                window['-STARTYEAR-'].update("")
             if(endYear[1]):
                 window['-ENDYEAR-'].update("End year: "+ str(endYear[0]))
             else:
                 window['-ENDYEAR-'].update(" ")
-            window['-YEARSACTIVE-'].update("Years active: "+ str(nOYearsActive))
+            if (nOYearsActive):
+                window['-YEARSACTIVE-'].update("Years active: "+ str(nOYearsActive))
+            else:
+                window['-YEARSACTIVE-'].update("")
             
-         
-            window['-ABOUT-'].update(about)
+            if (about):
+                window['-ABOUT-'].update(about)
+            else:
+                window['-ABOUT-'].update("")
 
         try:
             print(musicbrainzID[1])
         except IndexError:
             resetGuiWindow()
             window['-ARTIST-'].update('No Artist Found')
+            print('No Artist Found')
 
         else:
             releases = getReleasesByMbID(musicbrainzID[1])
