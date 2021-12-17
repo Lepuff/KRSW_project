@@ -29,7 +29,7 @@ def millisToStr(millis):
 # get all the tracks connected to a musicbrainz release id
 def getSongsBymbid(release_mbid):
     result = musicbrainzngs.browse_recordings(release=release_mbid,limit=100)
-    l =[]
+    songList =[]
     for r in result["recording-list"]:
         title =""
         length =""
@@ -39,8 +39,8 @@ def getSongsBymbid(release_mbid):
         if "title" in r:
             title = r["title"]
         
-        l.append((title,length))
-    return l
+        songList.append((title,length))
+    return songList
 
 
 # get releases connected to to a artist, subfunction becuase of the limit on requests on the musicbrainz server, see next function.
